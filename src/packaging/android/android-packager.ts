@@ -1,11 +1,9 @@
 import type { IHttpClient } from "../../core/types.js";
 import { ValidationError, PackagingJobError, AnalysisTimeoutError } from "../../core/errors.js";
-import { AppUrl } from "../../domain/app-url.js";
-import { PackageId } from "../../domain/package-id.js";
-import { ManifestIconCollection } from "../../domain/manifest-icons.js";
 import { PackageArchive } from "../types.js";
 import type { PwaAnalysisResult } from "../../report/types.js";
 import type { AndroidPackageOptions, AndroidPollOptions } from "./types.js";
+import { AndroidOptionsBuilder } from "./options-builder.js";
 
 interface JobStatusPayload {
   readonly id: string;
@@ -42,12 +40,20 @@ export class AndroidPackager {
     return this.build(options, pollOptions);
   }
 
+  public createOptionsFromAnalysis(
+    analysis: PwaAnalysisResult,
+    overrides?: Partial<AndroidPackageOptions>
+  ): AndroidPackageOptions {
+    return AndroidOptionsBuilder.fromAnalysis(analysis, overrides);
+  }
+
   private async enqueue(options: AndroidPackageOptions): Promise<string> {
+    const payload = AndroidOptionsBuilder.normalize(options);
     const response = await this.http.request<string>({
       url: `${this.baseUrl}/enqueuePackageJob`,
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(options),
+      body: JSON.stringify(payload),
       responseType: "text"
     });
     return (response.data || "").trim().replace(/^"|"$/g, "");
@@ -65,14 +71,19 @@ export class AndroidPackager {
       if (statusData.status === "Completed") {
         return;
       }
-      if (statusData.status === "Failed") {
-        const message = (statusData.errors || []).join("; ") || "Android packaging job failed in CloudAPK";
-        throw new PackagingJobError("android", message, statusData.logs);
-      }
+      this.assertNotFailed(statusData);
       options?.onProgress?.(attempt, statusData.status, statusData.logs);
       await this.sleep(interval);
     }
     throw new AnalysisTimeoutError(jobId, timeout);
+  }
+
+  private assertNotFailed(statusData: JobStatusPayload): void {
+    if (statusData.status !== "Failed") {
+      return;
+    }
+    const message = (statusData.errors || []).join("; ") || "Android packaging job failed in CloudAPK";
+    throw new PackagingJobError("android", message, statusData.logs);
   }
 
   private async checkJobStatus(jobId: string): Promise<JobStatusPayload> {
@@ -97,43 +108,6 @@ export class AndroidPackager {
     if (!options.packageId || !options.name || !options.iconUrl) {
       throw new ValidationError("Android options requires packageId, name, and iconUrl.", "AndroidPackageOptions");
     }
-  }
-
-  private createOptionsFromAnalysis(
-    analysis: PwaAnalysisResult,
-    overrides?: Partial<AndroidPackageOptions>
-  ): AndroidPackageOptions {
-    const manifest = analysis.webManifest?.manifest ?? {};
-    const baseUrl = new AppUrl(analysis.url);
-    const icons = new ManifestIconCollection(analysis.webManifest?.manifest.icons).resolveUrls(baseUrl);
-    const largest = icons.getLargestSquareIcon(512) ?? icons.getLargestSquareIcon();
-    const maskable = icons.getMaskableIcon();
-    const appName = (manifest.name as string) || (manifest.short_name as string) || "My App";
-    const packageId = overrides?.packageId ?? PackageId.fromHostname(baseUrl.hostname).value;
-
-    return {
-      appVersion: overrides?.appVersion ?? "1.0.0.0",
-      appVersionCode: overrides?.appVersionCode ?? 1,
-      backgroundColor: overrides?.backgroundColor ?? (manifest.background_color as string) ?? "#ffffff",
-      display: overrides?.display ?? (manifest.display as string) ?? "standalone",
-      enableNotifications: overrides?.enableNotifications ?? true,
-      enableSiteSettingsShortcut: overrides?.enableSiteSettingsShortcut ?? true,
-      fallbackType: overrides?.fallbackType ?? "customtabs",
-      features: overrides?.features ?? { locationDelegation: { enabled: false }, playBilling: { enabled: false } },
-      host: baseUrl.hostname,
-      iconUrl: overrides?.iconUrl ?? largest?.src ?? "",
-      maskableIconUrl: overrides?.maskableIconUrl ?? maskable?.src,
-      name: overrides?.name ?? appName,
-      launcherName: overrides?.launcherName ?? (manifest.short_name as string) ?? appName.substring(0, 12),
-      packageId,
-      startUrl: overrides?.startUrl ?? (manifest.start_url as string ?? "/dashboard"),
-      themeColor: overrides?.themeColor ?? (manifest.theme_color as string) ?? "#000000",
-      themeColorDark: overrides?.themeColorDark ?? "#000000",
-      webManifestUrl: analysis.webManifest?.url ?? baseUrl.resolve("/manifest.json").toString(),
-      pwaUrl: analysis.url,
-      fullScopeUrl: baseUrl.resolve("/").toString(),
-      minSdkVersion: overrides?.minSdkVersion ?? 23
-    };
   }
 
   private async sleep(ms: number): Promise<void> {

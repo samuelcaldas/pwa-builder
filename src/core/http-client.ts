@@ -14,7 +14,7 @@ export class FetchHttpClient implements IHttpClient {
   public async request<T = unknown>(request: HttpRequest): Promise<HttpResponse<T>> {
     const init = this.buildRequestInit(request);
     const rawResponse = await this.customFetch(request.url, init);
-    this.assertSuccessStatus(rawResponse, request.url);
+    await this.assertSuccessStatus(rawResponse, request.url);
     const data = await this.parseResponseBody<T>(rawResponse, request.responseType ?? "json");
     return {
       status: rawResponse.status,
@@ -41,11 +41,20 @@ export class FetchHttpClient implements IHttpClient {
     return JSON.stringify(body);
   }
 
-  private assertSuccessStatus(response: Response, url: string): void {
+  private async assertSuccessStatus(response: Response, url: string): Promise<void> {
     if (response.ok) {
       return;
     }
-    throw new NetworkError(response.status, response.statusText, url);
+    const responseBody = await this.readErrorBody(response);
+    throw new NetworkError(response.status, response.statusText, url, responseBody);
+  }
+
+  private async readErrorBody(response: Response): Promise<string | undefined> {
+    try {
+      return await response.text();
+    } catch {
+      return undefined;
+    }
   }
 
   private async parseResponseBody<T>(response: Response, type: ResponseType): Promise<T> {
@@ -89,7 +98,8 @@ export class MockHttpClient implements IHttpClient {
       throw new NetworkError(404, "Not Found (Mock)", request.url);
     }
     if (matched.status >= 400) {
-      throw new NetworkError(matched.status, matched.statusText, request.url);
+      const errorBody = typeof matched.data === "string" ? matched.data : JSON.stringify(matched.data);
+      throw new NetworkError(matched.status, matched.statusText, request.url, errorBody);
     }
     return matched as HttpResponse<T>;
   }

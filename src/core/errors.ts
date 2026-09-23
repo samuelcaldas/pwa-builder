@@ -59,12 +59,15 @@ export class NetworkError extends PwaBuilderError {
   public readonly statusCode: number;
   public readonly statusText: string;
   public readonly url: string;
+  public readonly responseBody?: string;
 
-  public constructor(statusCode: number, statusText: string, url: string) {
-    super(`HTTP request to "${url}" failed with status ${statusCode} (${statusText}).`);
+  public constructor(statusCode: number, statusText: string, url: string, responseBody?: string) {
+    const detail = responseBody ? ` Details: ${responseBody.trim()}` : "";
+    super(`HTTP request to "${url}" failed with status ${statusCode} (${statusText}).${detail}`);
     this.name = "NetworkError";
     this.statusCode = statusCode;
     this.statusText = statusText;
     this.url = url;
+    this.responseBody = responseBody;
   }
 }

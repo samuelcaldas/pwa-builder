@@ -114,9 +114,15 @@ async function handlePackageCommand(sdk: PwaBuilderSDK, options: CliParsedOption
   }
   if (platform === "android" || platform === "all") {
     const androidArchive = await sdk.packaging.android.buildFromAnalysis(report);
-    const androidPath = path.join(baseOut, "android", "android-package.zip");
+    const androidDir = path.join(baseOut, "android");
+    const androidPath = path.join(androidDir, "android-package.zip");
     await androidArchive.saveTo(androidPath);
+    const extractedFiles = await androidArchive.extractTo(androidDir);
     messages.push(`Android bundle saved: ${androidPath}`);
+    const apkFile = extractedFiles.find(p => p.endsWith(".apk"));
+    if (apkFile) {
+      messages.push(`Android APK generated: ${apkFile}`);
+    }
   }
 
   return messages.join("\n");

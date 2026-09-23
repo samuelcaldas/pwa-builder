@@ -15,6 +15,7 @@ tmp/*
 coverage/
 dist/
 build/
+output/
 node_modules/
 vendor/
 .venv/

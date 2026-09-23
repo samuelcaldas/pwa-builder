@@ -83,6 +83,12 @@ const pwa = new PwaBuilderSDK({
 ### `AndroidPackager`
 * `build(options: AndroidPackageOptions, pollOptions?: AndroidPollOptions): Promise<PackageArchive>`
 * `buildFromAnalysis(analysis: PwaAnalysisResult, overrides?: Partial<AndroidPackageOptions>, pollOptions?: AndroidPollOptions): Promise<PackageArchive>`
+* Automatically handles CloudAPK required attributes (`navigationColor`, `splashScreenFadeOutDuration`, `signingMode`).
+* Defaults to creating a valid signed package (`signingMode: "new"`) producing installable `.apk`, store-ready `.aab`, `signing.keystore`, and `assetlinks.json`.
+
+### `AndroidOptionsBuilder`
+* `fromAnalysis(analysis: PwaAnalysisResult, overrides?: Partial<AndroidPackageOptions>): AndroidPackageOptions`
+* `normalize(options: AndroidPackageOptions): Record<string, unknown>`
 
 ### `PackageArchive`
 * `toBuffer(): Buffer`

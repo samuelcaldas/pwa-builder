@@ -51,5 +51,13 @@ describe("Core Errors Hierarchy", () => {
     expect(error.statusCode).toBe(500);
     expect(error.statusText).toBe("Internal Server Error");
     expect(error.url).toBe("https://api.test/endpoint");
+    expect(error.responseBody).toBeUndefined();
+  });
+
+  it("should instantiate NetworkError with responseBody and format detail in message", () => {
+    const error = new NetworkError(400, "Bad Request", "https://api.test/endpoint", "Missing parameter");
+    expect(error.statusCode).toBe(400);
+    expect(error.responseBody).toBe("Missing parameter");
+    expect(error.message).toContain("Details: Missing parameter");
   });
 });

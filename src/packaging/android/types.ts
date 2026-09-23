@@ -35,12 +35,16 @@ export interface AndroidPackageOptions {
   readonly launcherName: string;
   readonly packageId: string;
   readonly shortcuts?: readonly unknown[];
-  readonly signing?: AndroidSigningConfig;
+  readonly signing?: AndroidSigningConfig | null;
   readonly signingMode?: "new" | "existing" | "none";
   readonly splashScreenFadeOutDuration?: number;
   readonly startUrl: string;
   readonly themeColor: string;
   readonly themeColorDark?: string;
+  readonly navigationColor?: string;
+  readonly navigationColorDark?: string;
+  readonly navigationDividerColor?: string;
+  readonly navigationDividerColorDark?: string;
   readonly webManifestUrl: string;
   readonly pwaUrl: string;
   readonly fullScopeUrl?: string;

@@ -29,6 +29,7 @@ export * from "./packaging/ios/types.js";
 export * from "./packaging/ios/ios-packager.js";
 export * from "./packaging/android/types.js";
 export * from "./packaging/android/android-packager.js";
+export * from "./packaging/android/options-builder.js";
 
 // Main SDK Facade
 export * from "./client.js";
