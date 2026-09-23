@@ -1,0 +1,57 @@
+{
+  "name": "pwa-builder-sdk",
+  "version": "1.0.0",
+  "description": "TypeScript SDK for building Android, iOS, and Microsoft Store apps from PWAs using PWABuilder APIs",
+  "type": "module",
+  "main": "./dist/src/index.cjs",
+  "module": "./dist/src/index.js",
+  "types": "./dist/src/index.d.ts",
+  "bin": {
+    "pwabuilder-sdk": "./dist/bin/cli.js",
+    "pwa-sdk": "./dist/bin/cli.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "test": "vitest run",
+    "test:unit": "vitest run tests/unit",
+    "test:e2e": "vitest run tests/e2e",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "typecheck": "tsc --noEmit",
+    "cli": "tsx bin/cli.ts"
+  },
+  "keywords": [
+    "pwa",
+    "pwabuilder",
+    "sdk",
+    "twa",
+    "msix",
+    "ios",
+    "android",
+    "microsoft-store",
+    "nextjs",
+    "react"
+  ],
+  "author": "PWA Builder SDK Contributors",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^22.13.9",
+    "@vitest/coverage-v8": "^3.0.7",
+    "fflate": "^0.8.2",
+    "tsup": "^8.4.0",
+    "tsx": "^4.19.3",
+    "typescript": "^5.8.2",
+    "vitest": "^3.0.7"
+  },
+  "dependencies": {
+    "fflate": "^0.8.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
